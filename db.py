@@ -32,13 +32,12 @@ def add_user(telegram_id: int, phone: str, username: str, password: str):
     try:
         # Проверяем уникальность
         existing = session.query(User).filter(
-            (User.telegram_id == telegram_id) |
             (User.phone == phone) |
             (User.username == username)
         ).first()
 
         if existing:
-            session.close()
+            print(f"Пользователь с телефоном {phone} или логином {username} уже существует")
             return False
 
         user = User(
@@ -57,7 +56,6 @@ def add_user(telegram_id: int, phone: str, username: str, password: str):
         return False
     finally:
         session.close()
-
 
 # Поиск пользователя по telegram_id
 def get_user_by_telegram_id(telegram_id: int):
