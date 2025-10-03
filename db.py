@@ -14,7 +14,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, unique=True, index=True)
+    telegram_id = Column(Integer, index=True)
     phone = Column(String, unique=True)
     username = Column(String, unique=True)
     password = Column(String)
@@ -30,14 +30,14 @@ def init_db():
 def add_user(telegram_id: int, phone: str, username: str, password: str):
     session = SessionLocal()
     try:
-        # Проверяем уникальность
+        # Проверяем уникальность телефона и логина
         existing = session.query(User).filter(
             (User.phone == phone) |
             (User.username == username)
         ).first()
 
         if existing:
-            print(f"Пользователь с телефоном {phone} или логином {username} уже существует")
+            session.close()
             return False
 
         user = User(
@@ -57,6 +57,7 @@ def add_user(telegram_id: int, phone: str, username: str, password: str):
     finally:
         session.close()
 
+
 # Поиск пользователя по telegram_id
 def get_user_by_telegram_id(telegram_id: int):
     session = SessionLocal()
@@ -65,11 +66,11 @@ def get_user_by_telegram_id(telegram_id: int):
     return user
 
 
-# Авторизация пользователя
-def authenticate_user(phone: str, password: str):
+# Авторизация пользователя по телефону или логину
+def authenticate_user_by_identifier(identifier: str, password: str):
     session = SessionLocal()
     user = session.query(User).filter(
-        User.phone == phone,
+        ((User.phone == identifier) | (User.username == identifier)),
         User.password == password
     ).first()
     session.close()

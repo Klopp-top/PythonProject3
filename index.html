@@ -26,7 +26,7 @@
     h1 {
       font-weight: 700;
       margin-bottom: 30px;
-      color: #388e3c; /* Зеленый цвет */
+      color: #388e3c;
       text-align: center;
       font-size: 2rem;
     }
@@ -46,13 +46,13 @@
       border-bottom: 3px solid #388e3c;
     }
     .btn-danger {
-      background: #388e3c; /* Зеленая кнопка */
+      background: #388e3c;
       border: none;
       padding: 12px;
       font-size: 1.1rem;
     }
     .btn-danger:hover {
-      background: #2e7d32; /* Темно-зеленая кнопка при наведении */
+      background: #2e7d32;
     }
     footer {
       margin-top: 40px;
@@ -70,6 +70,7 @@
   <div class="container">
     <h1>🍕 Пиццерия</h1>
     <img src="/img.png" class="img-fluid mb-3" />
+
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">
@@ -88,8 +89,8 @@
       <div class="tab-pane fade show active" id="login" role="tabpanel">
         <form id="loginForm">
           <div class="mb-3">
-            <label for="loginPhone" class="form-label">Номер телефона</label>
-            <input type="tel" id="loginPhone" class="form-control" placeholder="+998 00 000 00 00" required />
+            <label for="loginIdentifier" class="form-label">Логин или телефон</label>
+            <input type="text" id="loginIdentifier" class="form-control" placeholder="Введите логин или номер" required />
           </div>
           <div class="mb-4">
             <label for="loginPassword" class="form-label">Пароль</label>
@@ -105,16 +106,21 @@
         <form id="registerForm">
           <div class="mb-3">
             <label for="regPhone" class="form-label">Номер телефона</label>
-            <input type="tel" id="regPhone" class="form-control" placeholder="+998 00 000 00 00" required />
-            <div class="form-text">Формат: +998 00 000 00 00</div>
+            <input type="tel" id="regPhone" class="form-control" placeholder="+998 00 000 00 00"
+                   pattern="^\+998\d{9}$" title="Введите номер в формате +998XXXXXXXXX (9 цифр после +998)" required />
+            <div class="form-text">Формат: +998 и 9 цифр (например: +998901234567)</div>
           </div>
           <div class="mb-3">
             <label for="regLogin" class="form-label">Логин</label>
             <input type="text" id="regLogin" class="form-control" placeholder="Придумайте логин" minlength="3" maxlength="20" required />
           </div>
-          <div class="mb-4">
+          <div class="mb-3">
             <label for="regPassword" class="form-label">Пароль</label>
             <input type="password" id="regPassword" class="form-control" placeholder="Придумайте пароль" minlength="6" required />
+          </div>
+          <div class="mb-4">
+            <label for="regPasswordConfirm" class="form-label">Подтвердите пароль</label>
+            <input type="password" id="regPasswordConfirm" class="form-control" placeholder="Повторите пароль" minlength="6" required />
           </div>
           <button type="submit" class="btn btn-danger w-100 fw-bold">Зарегистрироваться</button>
         </form>
@@ -136,14 +142,14 @@
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const phone = document.getElementById('loginPhone').value.trim().replace(/\s/g, '');
+      const identifier = document.getElementById('loginIdentifier').value.trim().replace(/\s/g, '');
       const password = document.getElementById('loginPassword').value.trim();
 
       try {
         const response = await fetch(`${API_URL}/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, password })
+          body: JSON.stringify({ identifier, password })
         });
 
         const data = await response.json();
@@ -167,6 +173,22 @@
       const phone = document.getElementById('regPhone').value.trim().replace(/\s/g, '');
       const username = document.getElementById('regLogin').value.trim();
       const password = document.getElementById('regPassword').value.trim();
+      const passwordConfirm = document.getElementById('regPasswordConfirm').value.trim();
+
+      const msgDiv = document.getElementById('registerMessage');
+
+      // Проверка формата номера
+      const phoneRegex = /^\+998\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        msgDiv.innerHTML = '<div class="alert alert-danger">Неверный формат номера! Нужно: +998 и 9 цифр</div>';
+        return;
+      }
+
+      // Проверка совпадения паролей
+      if (password !== passwordConfirm) {
+        msgDiv.innerHTML = '<div class="alert alert-danger">Пароли не совпадают!</div>';
+        return;
+      }
 
       try {
         const response = await fetch(`${API_URL}/register`, {
@@ -181,7 +203,6 @@
         });
 
         const data = await response.json();
-        const msgDiv = document.getElementById('registerMessage');
 
         if (data.status === 'ok') {
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
@@ -193,7 +214,7 @@
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }
       } catch (err) {
-        document.getElementById('registerMessage').innerHTML = '<div class="alert alert-danger">Ошибка подключения к серверу</div>';
+        msgDiv.innerHTML = '<div class="alert alert-danger">Ошибка подключения к серверу</div>';
       }
     });
   </script>
