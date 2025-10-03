@@ -12,7 +12,7 @@ async def cmd_start(message: types.Message):
     keyboard.add(
         types.InlineKeyboardButton(
             text="Открыть мини-приложение 🍕",
-            web_app=types.WebAppInfo(url="https://nonexhortative-spindlelike-abby.ngrok-free.dev")
+            web_app=types.WebAppInfo(url="https://python-project3-brown.vercel.app/")
         )
     )
     await message.answer("Привет! Жми кнопку и регистрируйся:", reply_markup=keyboard)
