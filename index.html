@@ -122,8 +122,19 @@
             <label for="regPasswordConfirm" class="form-label">Подтвердите пароль</label>
             <input type="password" id="regPasswordConfirm" class="form-control" placeholder="Повторите пароль" minlength="6" required />
           </div>
-          <button type="submit" class="btn btn-danger w-100 fw-bold">Зарегистрироваться</button>
+          <button type="submit" class="btn btn-danger w-100 fw-bold" id="regBtn">Зарегистрироваться</button>
         </form>
+
+        <!-- Форма подтверждения кода -->
+        <form id="verifyForm" style="display: none;" class="mt-4">
+          <div class="mb-3">
+            <label for="verifyCode" class="form-label">Код из Telegram</label>
+            <input type="text" id="verifyCode" class="form-control" placeholder="Введите 6-значный код" pattern="\d{6}" maxlength="6" required />
+            <div class="form-text">Проверьте сообщения в Telegram</div>
+          </div>
+          <button type="submit" class="btn btn-danger w-100 fw-bold">Подтвердить код</button>
+        </form>
+
         <div id="registerMessage"></div>
       </div>
     </div>
@@ -135,7 +146,7 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const API_URL = 'http://192.168.1.14:8000';
+    const API_URL = 'http://localhost:8000';
     const telegramId = tg.initDataUnsafe?.user?.id || 123456789;
 
     // Вход
@@ -206,10 +217,45 @@
 
         if (data.status === 'ok') {
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-          document.getElementById('registerForm').reset();
+          // Показываем форму ввода кода
+          document.getElementById('registerForm').style.display = 'none';
+          document.getElementById('verifyForm').style.display = 'block';
+        } else {
+          msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+      } catch (err) {
+        msgDiv.innerHTML = '<div class="alert alert-danger">Ошибка подключения к серверу</div>';
+      }
+    });
+
+    // Подтверждение кода
+    document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const code = document.getElementById('verifyCode').value.trim();
+      const msgDiv = document.getElementById('registerMessage');
+
+      try {
+        const response = await fetch(`${API_URL}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegram_id: telegramId,
+            code
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+          msgDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+          document.getElementById('verifyForm').reset();
           setTimeout(() => {
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('verifyForm').style.display = 'none';
+            document.getElementById('registerForm').reset();
             document.getElementById('login-tab').click();
-          }, 1500);
+          }, 2000);
         } else {
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }

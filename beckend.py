@@ -27,11 +27,32 @@ def register():
     if existing_username:
         return jsonify({"status": "error", "message": "Этот логин уже занят"}), 400
 
-    success = db.add_user(telegram_id, phone, username, password)
+    # Генерируем код подтверждения
+    verification_code = str(random.randint(100000, 999999))
+
+    success = db.add_user(telegram_id, phone, username, password, verification_code)
     if success:
-        return jsonify({"status": "ok", "message": "Регистрация успешна!"})
+        # Отправляем код в Telegram
+        send_telegram_message(telegram_id, f"🔐 Ваш код подтверждения: {verification_code}")
+        return jsonify({"status": "ok", "message": "Код отправлен в Telegram!"})
     else:
         return jsonify({"status": "error", "message": "Ошибка при регистрации"}), 400
+
+
+@app.route('/verify', methods=['POST'])
+def verify():
+    data = request.json
+    telegram_id = data.get("telegram_id")
+    code = data.get("code")
+
+    if not all([telegram_id, code]):
+        return jsonify({"status": "error", "message": "Введите код"}), 400
+
+    success = db.verify_user_code(telegram_id, code)
+    if success:
+        return jsonify({"status": "ok", "message": "Регистрация завершена!"})
+    else:
+        return jsonify({"status": "error", "message": "Неверный код"}), 400
 
 
 @app.route('/login', methods=['POST'])
@@ -60,4 +81,4 @@ def login():
 
 if __name__ == '__main__':
     db.init_db()
-    app.run(host='0.0.0.0', port=8000)
+    app.run(port=8000)

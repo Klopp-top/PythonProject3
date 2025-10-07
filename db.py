@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Настройки подключения к PostgreSQL
@@ -18,6 +18,8 @@ class User(Base):
     phone = Column(String, unique=True)
     username = Column(String, unique=True)
     password = Column(String)
+    verified = Column(Boolean, default=False)
+    verification_code = Column(String, nullable=True)
 
 
 # Создаем таблицы в базе
@@ -26,8 +28,8 @@ def init_db():
     print("Таблицы созданы!")
 
 
-# Добавляем пользователя в базу
-def add_user(telegram_id: int, phone: str, username: str, password: str):
+# Добавляем пользователя в базу (пока не подтвержден)
+def add_user(telegram_id: int, phone: str, username: str, password: str, verification_code: str):
     session = SessionLocal()
     try:
         # Проверяем уникальность телефона и логина
@@ -44,11 +46,13 @@ def add_user(telegram_id: int, phone: str, username: str, password: str):
             telegram_id=telegram_id,
             phone=phone,
             username=username,
-            password=password
+            password=password,
+            verified=False,
+            verification_code=verification_code
         )
         session.add(user)
         session.commit()
-        print(f"Пользователь {username} добавлен.")
+        print(f"Пользователь {username} добавлен (не подтвержден).")
         return True
     except Exception as e:
         session.rollback()
@@ -71,10 +75,30 @@ def authenticate_user_by_identifier(identifier: str, password: str):
     session = SessionLocal()
     user = session.query(User).filter(
         ((User.phone == identifier) | (User.username == identifier)),
-        User.password == password
+        User.password == password,
+        User.verified == True  # Только подтвержденные
     ).first()
     session.close()
     return user
+
+
+# Проверка и подтверждение кода
+def verify_user_code(telegram_id: int, code: str):
+    session = SessionLocal()
+    user = session.query(User).filter(
+        User.telegram_id == telegram_id,
+        User.verification_code == code,
+        User.verified == False
+    ).first()
+
+    if user:
+        user.verified = True
+        user.verification_code = None
+        session.commit()
+        session.close()
+        return True
+    session.close()
+    return False
 
 
 if __name__ == "__main__":
