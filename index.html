@@ -63,13 +63,37 @@
     .alert {
       margin-top: 20px;
     }
+    .pizza-card {
+      margin-bottom: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .pizza-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    .pizza-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .pizza-body {
+      padding: 15px;
+    }
+    .pizza-price {
+      color: #388e3c;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="container" id="authContainer">
     <h1>🍕 Пиццерия</h1>
-    <img src="/img.PNG" class="img-fluid mb-3" />
+    <img src="/img.png" class="img-fluid mb-3" />
 
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -142,12 +166,158 @@
 
   <footer>© 2025 Моя Пиццерия</footer>
 
+  <!-- Меню с пиццами (скрыто по умолчанию) -->
+  <div class="container" id="menuContainer" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>🍕 Меню</h1>
+      <button class="btn btn-sm btn-outline-danger" id="logoutBtn">Выход</button>
+    </div>
+    <p class="text-center mb-4">Добро пожаловать, <strong id="userName"></strong>!</p>
+
+    <div class="row" id="pizzaList">
+      <!-- Пиццы будут добавлены через JS -->
+    </div>
+
+    <div class="mt-4">
+      <button class="btn btn-danger w-100 fw-bold" id="cartBtn">
+        🛒 Корзина (<span id="cartCount">0</span>)
+      </button>
+    </div>
+  </div>
+
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
     const API_URL = 'http://localhost:8000';
     const telegramId = tg.initDataUnsafe?.user?.id || 123456789;
+
+    let currentUser = null;
+    let cart = [];
+
+    // Список пицц
+    const pizzas = [
+      {
+        id: 1,
+        name: "Маргарита",
+        description: "Томатный соус, моцарелла, базилик",
+        price: 45000,
+        image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400"
+      },
+      {
+        id: 2,
+        name: "Пепперони",
+        description: "Томатный соус, моцарелла, пепперони",
+        price: 55000,
+        image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400"
+      },
+      {
+        id: 3,
+        name: "Четыре сыра",
+        description: "Моцарелла, пармезан, горгонзола, чеддер",
+        price: 60000,
+        image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96a47?w=400"
+      },
+      {
+        id: 4,
+        name: "Мексиканская",
+        description: "Говядина, перец, лук, халапеньо",
+        price: 58000,
+        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400"
+      },
+      {
+        id: 5,
+        name: "Гавайская",
+        description: "Курица, ананас, моцарелла",
+        price: 52000,
+        image: "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400"
+      },
+      {
+        id: 6,
+        name: "Вегетарианская",
+        description: "Помидоры, перец, грибы, оливки",
+        price: 48000,
+        image: "https://images.unsplash.com/photo-1511689660979-10d2b1aada49?w=400"
+      }
+    ];
+
+    // Добавление в корзину (глобальная функция)
+    window.addToCart = function(pizzaId) {
+      const pizza = pizzas.find(p => p.id === pizzaId);
+      const existingItem = cart.find(item => item.id === pizzaId);
+
+      if (existingItem) {
+        existingItem.quantity++;
+      } else {
+        cart.push({ ...pizza, quantity: 1 });
+      }
+
+      updateCartCount();
+      showNotification(`${pizza.name} добавлена в корзину!`);
+    }
+
+    // Отображение меню
+    function showMenu(user) {
+      currentUser = user;
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('menuContainer').style.display = 'block';
+      document.getElementById('userName').textContent = user.username;
+
+      const pizzaList = document.getElementById('pizzaList');
+      pizzaList.innerHTML = pizzas.map(pizza => `
+        <div class="col-md-6">
+          <div class="pizza-card">
+            <img src="${pizza.image}" class="pizza-img" alt="${pizza.name}">
+            <div class="pizza-body">
+              <h5>${pizza.name}</h5>
+              <p class="text-muted small">${pizza.description}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="pizza-price">${pizza.price.toLocaleString()} сум</span>
+                <button class="btn btn-sm btn-danger" onclick="addToCart(${pizza.id})">
+                  В корзину
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Обновление счетчика корзины
+    function updateCartCount() {
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.getElementById('cartCount').textContent = totalItems;
+    }
+
+    // Уведомление
+    function showNotification(message) {
+      tg.showAlert(message);
+    }
+
+    // Выход
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      currentUser = null;
+      cart = [];
+      document.getElementById('authContainer').style.display = 'block';
+      document.getElementById('menuContainer').style.display = 'none';
+      updateCartCount();
+    });
+
+    // Корзина
+    document.getElementById('cartBtn').addEventListener('click', () => {
+      if (cart.length === 0) {
+        showNotification('Корзина пустая!');
+        return;
+      }
+
+      const cartText = cart.map(item =>
+        `${item.name} x${item.quantity} - ${(item.price * item.quantity).toLocaleString()} сум`
+      ).join('\n');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      showNotification(`Ваш заказ:\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум`);
+    });
 
     // Вход
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -168,7 +338,7 @@
 
         if (data.status === 'ok') {
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}<br>Добро пожаловать, ${data.user.username}!</div>`;
-          setTimeout(() => tg.close(), 2000);
+          setTimeout(() => showMenu(data.user), 1000);
         } else {
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }
