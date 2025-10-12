@@ -9,7 +9,6 @@ CORS(app)
 
 BOT_TOKEN = '7261530454:AAFyfYScsoMSdHyQ2N8nf4oQ0MUMW7GXfAc'
 
-
 def send_telegram_message(chat_id, text):
     """Отправка сообщения в Telegram"""
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"

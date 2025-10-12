@@ -174,8 +174,39 @@
     </div>
     <p class="text-center mb-4">Добро пожаловать, <strong id="userName"></strong>!</p>
 
+    <!-- Категории меню -->
+    <ul class="nav nav-pills mb-4 flex-nowrap overflow-auto" role="tablist" style="white-space: nowrap;">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-category="pizza" onclick="showCategory('pizza')">🍕 Пицца</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="burger" onclick="showCategory('burger')">🍔 Бургер</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="hotdog" onclick="showCategory('hotdog')">🌭 Хот-Дог</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="lavash" onclick="showCategory('lavash')">🌯 Лаваш</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="doner" onclick="showCategory('doner')">🥙 Донер</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="sides" onclick="showCategory('sides')">🍟 Гарниры</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="snacks" onclick="showCategory('snacks')">🍿 Снеки</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="salads" onclick="showCategory('salads')">🥗 Салаты</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-category="drinks" onclick="showCategory('drinks')">🥤 Напитки</button>
+      </li>
+    </ul>
+
     <div class="row" id="pizzaList">
-      <!-- Пиццы будут добавлены через JS -->
+      <!-- Товары будут добавлены через JS -->
     </div>
 
     <div class="mt-4">
