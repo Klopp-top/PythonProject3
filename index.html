@@ -8,97 +8,263 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
     }
     .container {
-      max-width: 420px;
-      background: white;
-      padding: 35px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-width: 450px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     h1 {
-      font-weight: 700;
-      margin-bottom: 30px;
-      color: #388e3c;
+      font-weight: 800;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       text-align: center;
-      font-size: 2rem;
+      font-size: 2.5rem;
+      letter-spacing: -1px;
+    }
+    img.img-fluid {
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
     }
     .nav-tabs {
-      border-bottom: 2px solid #388e3c;
-      margin-bottom: 25px;
+      border: none;
+      margin-bottom: 30px;
+      gap: 10px;
     }
     .nav-tabs .nav-link {
       color: #666;
       border: none;
-      padding: 12px 20px;
+      padding: 12px 24px;
       font-weight: 600;
+      border-radius: 12px;
+      background: #f5f5f5;
+      transition: all 0.3s ease;
     }
     .nav-tabs .nav-link.active {
-      color: #388e3c;
-      background: transparent;
-      border-bottom: 3px solid #388e3c;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+    }
+    .form-control {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+    .form-control:focus {
+      border-color: #11998e;
+      box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+      outline: none;
+    }
+    .form-label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
     }
     .btn-danger {
-      background: #388e3c;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
       border: none;
-      padding: 12px;
-      font-size: 1.1rem;
+      padding: 14px;
+      font-size: 1.05rem;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
     }
     .btn-danger:hover {
-      background: #2e7d32;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+      background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+    }
+    .btn-outline-danger {
+      border: 2px solid #11998e;
+      color: #11998e;
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-danger:hover {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      border-color: transparent;
     }
     footer {
       margin-top: 40px;
       text-align: center;
-      color: #999;
+      color: rgba(255,255,255,0.9);
       font-size: 0.9rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .alert {
       margin-top: 20px;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .alert-success {
+      background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+      color: #155724;
+    }
+    .alert-danger {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: #721c24;
     }
     .pizza-card {
       margin-bottom: 20px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
+      border: none;
+      border-radius: 16px;
       overflow: hidden;
-      transition: transform 0.2s;
+      transition: all 0.3s ease;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .pizza-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(17, 153, 142, 0.2);
     }
     .pizza-img {
       width: 100%;
       height: 200px;
       object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .pizza-card:hover .pizza-img {
+      transform: scale(1.05);
     }
     .pizza-body {
-      padding: 15px;
+      padding: 20px;
+    }
+    .pizza-body h5 {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
     }
     .pizza-price {
-      color: #388e3c;
-      font-size: 1.3rem;
-      font-weight: 700;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+    .nav-pills {
+      gap: 8px;
+      padding-bottom: 10px;
     }
     .nav-pills .nav-link {
       color: #666;
       border: 2px solid #e0e0e0;
-      margin-right: 8px;
+      margin-right: 0;
       border-radius: 20px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       font-size: 0.9rem;
+      background: white;
+      transition: all 0.3s ease;
+      white-space: nowrap;
     }
     .nav-pills .nav-link.active {
-      background: #388e3c;
-      border-color: #388e3c;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      border-color: transparent;
       color: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+    }
+    .cart-item {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 15px 0;
+      animation: fadeIn 0.3s ease;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .quantity-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #11998e;
+      background: white;
+      color: #11998e;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .quantity-btn:hover {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+    }
+    .quantity-display {
+      min-width: 35px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .modal-content {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      border-radius: 20px 20px 0 0;
+    }
+    .modal-title {
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+    .btn-close {
+      filter: brightness(0) invert(1);
+    }
+    .modal-footer {
+      border-top: 1px solid #f0f0f0;
+      padding: 20px 24px;
+    }
+    #cartCount {
+      display: inline-block;
+      min-width: 20px;
     }
   </style>
 </head>
@@ -404,6 +570,74 @@
       document.getElementById('cartCount').textContent = totalItems;
     }
 
+    // Отрисовка корзины
+    function renderCart() {
+      const cartBody = document.getElementById('cartModalBody');
+
+      if (cart.length === 0) {
+        cartBody.innerHTML = '<p class="text-center text-muted py-4">Корзина пустая</p>';
+        document.getElementById('cartTotal').textContent = '0 сум';
+        return;
+      }
+
+      cartBody.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h6 class="mb-1">${item.name}</h6>
+              <small class="text-muted">${item.price.toLocaleString()} сум</small>
+            </div>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart(${item.id})">
+              ✕
+            </button>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="quantity-controls">
+              <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">−</button>
+              <span class="quantity-display">${item.quantity}</span>
+              <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
+            </div>
+            <strong>${(item.price * item.quantity).toLocaleString()} сум</strong>
+          </div>
+        </div>
+      `).join('');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('cartTotal').textContent = total.toLocaleString() + ' сум';
+    }
+
+    // Увеличить количество
+    window.increaseQuantity = function(itemId) {
+      const item = cart.find(i => i.id === itemId);
+      if (item) {
+        item.quantity++;
+        updateCartCount();
+        renderCart();
+      }
+    }
+
+    // Уменьшить количество
+    window.decreaseQuantity = function(itemId) {
+      const item = cart.find(i => i.id === itemId);
+      if (item) {
+        if (item.quantity > 1) {
+          item.quantity--;
+        } else {
+          cart = cart.filter(i => i.id !== itemId);
+        }
+        updateCartCount();
+        renderCart();
+      }
+    }
+
+    // Удалить из корзины
+    window.removeFromCart = function(itemId) {
+      cart = cart.filter(i => i.id !== itemId);
+      updateCartCount();
+      renderCart();
+      showNotification('Товар удален из корзины');
+    }
+
     // Уведомление
     function showNotification(message) {
       tg.showAlert(message);
@@ -420,6 +654,13 @@
 
     // Корзина
     document.getElementById('cartBtn').addEventListener('click', () => {
+      renderCart();
+      const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+      cartModal.show();
+    });
+
+    // Оформление заказа
+    document.getElementById('orderBtn').addEventListener('click', () => {
       if (cart.length === 0) {
         showNotification('Корзина пустая!');
         return;
@@ -431,7 +672,15 @@
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-      showNotification(`Ваш заказ:\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум`);
+      showNotification(`Ваш заказ:\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум\n\nЗаказ оформлен!`);
+
+      // Очищаем корзину после заказа
+      cart = [];
+      updateCartCount();
+      renderCart();
+
+      // Закрываем модальное окно
+      bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
     });
 
     // Вход
