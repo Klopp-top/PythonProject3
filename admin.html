@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админ-панель - Пиццерия</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      max-width: 1200px;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      margin-bottom: 30px;
+    }
+    .order-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    .order-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .order-card.new {
+      border-color: #11998e;
+      background: rgba(17, 153, 142, 0.05);
+    }
+    .order-card.preparing {
+      border-color: #ffa726;
+      background: rgba(255, 167, 38, 0.05);
+    }
+    .order-card.ready {
+      border-color: #66bb6a;
+      background: rgba(102, 187, 106, 0.05);
+    }
+    .order-card.delivered {
+      border-color: #9e9e9e;
+      background: rgba(158, 158, 158, 0.05);
+    }
+    .badge {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .status-select {
+      border: 2px solid #11998e;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .order-total {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #11998e;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-card h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .stat-card p {
+      margin: 0;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>📊 Админ-панель заказов</h1>
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <h3 id="totalOrders">0</h3>
+        <p>Всего заказов</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="newOrders">0</h3>
+        <p>Новые</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="todayRevenue">0</h3>
+        <p>Выручка за сегодня</p>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Заказы</h3>
+      <button class="btn btn-success" onclick="loadOrders()">🔄 Обновить</button>
+    </div>
+
+    <div id="ordersList">
+      <p class="text-center text-muted">Загрузка заказов...</p>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:8000';
+
+    // Загрузка заказов
+    async function loadOrders() {
+      try {
+        const response = await fetch(`${API_URL}/orders`);
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+          renderOrders(data.orders);
+          updateStats(data.orders);
+        }
+      } catch (err) {
+        document.getElementById('ordersList').innerHTML =
+          '<p class="text-center text-danger">Ошибка подключения к серверу</p>';
+      }
+    }
+
+    // Отрисовка заказов
+    function renderOrders(orders) {
+      const ordersList = document.getElementById('ordersList');
+
+      if (orders.length === 0) {
+        ordersList.innerHTML = '<p class="text-center text-muted">Заказов пока нет</p>';
+        return;
+      }
+
+      ordersList.innerHTML = orders.map(order => {
+        const items = JSON.parse(order.items);
+        const statusNames = {
+          'new': 'Новый',
+          'preparing': 'Готовится',
+          'ready': 'Готов',
+          'delivered': 'Доставлен'
+        };
+
+        return `
+          <div class="order-card ${order.status}">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h5>Заказ #${order.id}</h5>
+                    <p class="mb-1"><strong>Клиент:</strong> ${order.username}</p>
+                    <p class="mb-1"><strong>Телефон:</strong> ${order.phone}</p>
+                    <p class="mb-1"><small class="text-muted">${order.created_at}</small></p>
+                  </div>
+                  <span class="badge bg-success">${statusNames[order.status]}</span>
+                </div>
+
+                <div class="mb-2">
+                  <strong>Товары:</strong>
+                  <ul class="mb-0">
+                    ${items.map(item => `
+                      <li>${item.name} x${item.quantity} — ${(item.price * item.quantity).toLocaleString()} сум</li>
+                    `).join('')}
+                  </ul>
+                </div>
+
+                <p class="order-total mb-0">Итого: ${order.total_price.toLocaleString()} сум</p>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Изменить статус:</label>
+                <select class="status-select form-select" onchange="updateStatus(${order.id}, this.value)">
+                  <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новый</option>
+                  <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Готовится</option>
+                  <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
+                  <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Доставлен</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Обновление статуса
+    async function updateStatus(orderId, status) {
+      try {
+        const response = await fetch(`${API_URL}/order/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+
+        const data = await response.json();
+        if (data.status === 'ok') {
+          loadOrders();
+        }
+      } catch (err) {
+        alert('Ошибка обновления статуса');
+      }
+    }
+
+    // Обновление статистики
+    function updateStats(orders) {
+      const total = orders.length;
+      const newCount = orders.filter(o => o.status === 'new').length;
+
+      const today = new Date().toISOString().split('T')[0];
+      const todayOrders = orders.filter(o => o.created_at.startsWith(today));
+      const revenue = todayOrders.reduce((sum, o) => sum + o.total_price, 0);
+
+      document.getElementById('totalOrders').textContent = total;
+      document.getElementById('newOrders').textContent = newCount;
+      document.getElementById('todayRevenue').textContent = revenue.toLocaleString() + ' сум';
+    }
+
+    // Автообновление каждые 10 секунд
+    loadOrders();
+    setInterval(loadOrders, 10000);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

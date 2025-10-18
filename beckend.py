@@ -170,12 +170,15 @@ if __name__ == '__main__':
     db.init_db()
 
 
-    # Запускаем Telegram бота в отдельном потоке
+    # Запускаем Telegram бота в отдельном потоке с новым event loop
     def start_bot():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         executor.start_polling(dp, skip_updates=True)
 
 
-    bot_thread = Thread(target=start_bot)
+    bot_thread = Thread(target=start_bot, daemon=True)
     bot_thread.start()
 
     # Запускаем Flask сервер
