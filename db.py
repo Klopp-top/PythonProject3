@@ -1,8 +1,13 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
+import os
 
 # Настройки подключения к PostgreSQL
-DATABASE_URL = "postgresql+psycopg2://postgres:123456@localhost:5432/pizza"
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+psycopg2://postgres:123456@localhost:5432/pizza')
+
+# Render использует postgres://, а SQLAlchemy требует postgresql://
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
@@ -20,6 +25,20 @@ class User(Base):
     password = Column(String)
     verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
+
+
+# Модель таблицы заказов
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
+    phone = Column(String)
+    username = Column(String)
+    items = Column(String)  # JSON строка с товарами
+    total_price = Column(Integer)
+    status = Column(String, default="new")  # new, preparing, ready, delivered
+    created_at = Column(String)
 
 
 # Создаем таблицы в базе

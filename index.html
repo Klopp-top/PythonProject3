@@ -271,7 +271,7 @@
 <body>
 
   <div class="container" id="authContainer">
-    <h1>Пиццерия</h1>
+    <h1>🍕 Пиццерия</h1>
     <img src="/img.png" class="img-fluid mb-3" />
 
     <ul class="nav nav-tabs" role="tablist">
@@ -659,27 +659,56 @@
     });
 
     // Оформление заказа
-    document.getElementById('orderBtn').addEventListener('click', () => {
+    document.getElementById('orderBtn').addEventListener('click', async () => {
       if (cart.length === 0) {
         showNotification('Корзина пустая!');
         return;
       }
 
-      const cartText = cart.map(item =>
-        `${item.name} x${item.quantity} - ${(item.price * item.quantity).toLocaleString()} сум`
-      ).join('\n');
+      const items = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      }));
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-      showNotification(`Ваш заказ:\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум\n\nЗаказ оформлен!`);
+      try {
+        const response = await fetch(`${API_URL}/order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            phone: currentUser.phone,
+            username: currentUser.username,
+            items: JSON.stringify(items),
+            total_price: total
+          })
+        });
 
-      // Очищаем корзину после заказа
-      cart = [];
-      updateCartCount();
-      renderCart();
+        const data = await response.json();
 
-      // Закрываем модальное окно
-      bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+        if (data.status === 'ok') {
+          const cartText = cart.map(item =>
+            `${item.name} x${item.quantity} - ${(item.price * item.quantity).toLocaleString()} сум`
+          ).join('\n');
+
+          showNotification(`✅ Заказ №${data.order_id} оформлен!\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум\n\nОжидайте звонка!`);
+
+          // Очищаем корзину
+          cart = [];
+          updateCartCount();
+          renderCart();
+
+          // Закрываем модальное окно
+          bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+        } else {
+          showNotification('Ошибка при оформлении заказа');
+        }
+      } catch (err) {
+        showNotification('Ошибка подключения к серверу');
+      }
     });
 
     // Вход
@@ -701,6 +730,8 @@
 
         if (data.status === 'ok') {
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}<br>Добро пожаловать, ${data.user.username}!</div>`;
+          // Сохраняем user.id для заказов
+          data.user.id = data.user.id || data.user.telegram_id;
           setTimeout(() => showMenu(data.user), 1000);
         } else {
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
@@ -714,17 +745,17 @@
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const phone = document.getElementById('regPhone').value.trim().replace(/\s/g, '');
+      const phone = document.getElementById('regPhone').value.trim().replace(/\s+/g, '').replace(/[^\d+]/g, '');
       const username = document.getElementById('regLogin').value.trim();
       const password = document.getElementById('regPassword').value.trim();
       const passwordConfirm = document.getElementById('regPasswordConfirm').value.trim();
 
       const msgDiv = document.getElementById('registerMessage');
 
-      // Проверка формата номера
+      // Проверка формата номера (более гибкая)
       const phoneRegex = /^\+998\d{9}$/;
       if (!phoneRegex.test(phone)) {
-        msgDiv.innerHTML = '<div class="alert alert-danger">Неверный формат номера! Нужно: +998 и 9 цифр</div>';
+        msgDiv.innerHTML = '<div class="alert alert-danger">Неверный формат номера!<br>Нужно: +998 и ровно 9 цифр<br>Например: +998901234567</div>';
         return;
       }
 
