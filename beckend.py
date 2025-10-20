@@ -166,6 +166,21 @@ def update_status(order_id):
         return jsonify({"status": "error", "message": "Ошибка обновления"}), 500
 
 
+@app.route('/user/<int:user_id>/orders', methods=['GET'])
+def get_user_orders(user_id):
+    orders = db.get_user_orders(user_id)
+    orders_list = []
+    for order in orders:
+        orders_list.append({
+            "id": order.id,
+            "items": order.items,
+            "total_price": order.total_price,
+            "status": order.status,
+            "created_at": order.created_at
+        })
+    return jsonify({"status": "ok", "orders": orders_list})
+
+
 if __name__ == '__main__':
     db.init_db()
 

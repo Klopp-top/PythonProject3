@@ -15,7 +15,7 @@ class PizzaAdminApp:
         self.root.configure(bg="#f0f0f0")
 
         # API URL
-        self.API_URL = "https://python-project3-git-master-akbars-projects-b5ef06b4.vercel.app/"
+        self.API_URL = "http://localhost:8000"
 
         # Создаем интерфейс
         self.create_widgets()

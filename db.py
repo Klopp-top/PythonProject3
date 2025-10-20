@@ -119,6 +119,56 @@ def verify_user_code(telegram_id: int, code: str):
     session.close()
     return False
 
+# Добавить заказ
+def add_order(user_id: int, phone: str, username: str, items: str, total_price: int):
+    session = SessionLocal()
+    try:
+        from datetime import datetime
+        order = Order(
+            user_id=user_id,
+            phone=phone,
+            username=username,
+            items=items,
+            total_price=total_price,
+            status="new",
+            created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        session.add(order)
+        session.commit()
+        order_id = order.id
+        session.close()
+        return order_id
+    except Exception as e:
+        session.rollback()
+        print(f"Ошибка при добавлении заказа: {e}")
+        session.close()
+        return None
+
+# Получить все заказы
+def get_all_orders():
+    session = SessionLocal()
+    orders = session.query(Order).order_by(Order.id.desc()).all()
+    session.close()
+    return orders
+
+# Обновить статус заказа
+def update_order_status(order_id: int, status: str):
+    session = SessionLocal()
+    try:
+        order = session.query(Order).filter(Order.id == order_id).first()
+        if order:
+            order.status = status
+            session.commit()
+            session.close()
+            return True
+        session.close()
+        return False
+    except Exception as e:
+        session.rollback()
+        print(f"Ошибка при обновлении статуса: {e}")
+        session.close()
+        return False
+
 
 if __name__ == "__main__":
     init_db()

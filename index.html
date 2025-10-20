@@ -266,6 +266,48 @@
       display: inline-block;
       min-width: 20px;
     }
+    .order-history-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    .order-history-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .order-status-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .status-new {
+      background: rgba(17, 153, 142, 0.2);
+      color: #11998e;
+      border: 2px solid #11998e;
+    }
+    .status-preparing {
+      background: rgba(255, 167, 38, 0.2);
+      color: #f57c00;
+      border: 2px solid #ffa726;
+    }
+    .status-ready {
+      background: rgba(102, 187, 106, 0.2);
+      color: #2e7d32;
+      border: 2px solid #66bb6a;
+    }
+    .status-delivered {
+      background: rgba(158, 158, 158, 0.2);
+      color: #616161;
+      border: 2px solid #9e9e9e;
+    }
+    .btn-group .btn {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -352,39 +394,61 @@
     </div>
     <p class="text-center mb-4">Добро пожаловать, <strong id="userName"></strong>!</p>
 
-    <!-- Категории меню -->
-    <ul class="nav nav-pills mb-4 flex-nowrap overflow-auto" role="tablist" style="white-space: nowrap;">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-category="pizza" onclick="showCategory('pizza')">🍕 Пицца</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="burger" onclick="showCategory('burger')">🍔 Бургер</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="hotdog" onclick="showCategory('hotdog')">🌭 Хот-Дог</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="lavash" onclick="showCategory('lavash')">🌯 Лаваш</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="doner" onclick="showCategory('doner')">🥙 Донер</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="sides" onclick="showCategory('sides')">🍟 Гарниры</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="snacks" onclick="showCategory('snacks')">🍿 Снеки</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="salads" onclick="showCategory('salads')">🥗 Салаты</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-category="drinks" onclick="showCategory('drinks')">🥤 Напитки</button>
-      </li>
-    </ul>
+    <!-- Главное меню: Каталог / Мои заказы -->
+    <div class="mb-4">
+      <div class="btn-group w-100" role="group">
+        <button type="button" class="btn btn-danger" id="catalogBtn" onclick="showCatalog()">
+          📋 Каталог
+        </button>
+        <button type="button" class="btn btn-outline-danger" id="ordersHistoryBtn" onclick="showOrdersHistory()">
+          📦 Мои заказы
+        </button>
+      </div>
+    </div>
 
-    <div class="row" id="pizzaList">
-      <!-- Товары будут добавлены через JS -->
+    <!-- Каталог товаров -->
+    <div id="catalogView">
+      <!-- Категории меню -->
+      <ul class="nav nav-pills mb-4 flex-nowrap overflow-auto" role="tablist" style="white-space: nowrap;">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-category="pizza" onclick="showCategory('pizza')">🍕 Пицца</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="burger" onclick="showCategory('burger')">🍔 Бургер</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="hotdog" onclick="showCategory('hotdog')">🌭 Хот-Дог</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="lavash" onclick="showCategory('lavash')">🌯 Лаваш</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="doner" onclick="showCategory('doner')">🥙 Донер</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="sides" onclick="showCategory('sides')">🍟 Гарниры</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="snacks" onclick="showCategory('snacks')">🍿 Снеки</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="salads" onclick="showCategory('salads')">🥗 Салаты</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-category="drinks" onclick="showCategory('drinks')">🥤 Напитки</button>
+        </li>
+      </ul>
+
+      <div class="row" id="pizzaList">
+        <!-- Товары будут добавлены через JS -->
+      </div>
+    </div>
+
+    <!-- История заказов -->
+    <div id="ordersHistoryView" style="display: none;">
+      <div id="userOrdersList">
+        <p class="text-center text-muted">Загрузка заказов...</p>
+      </div>
     </div>
 
     <div class="mt-4">
@@ -550,6 +614,106 @@
           </div>
         </div>
       `).join('');
+    }
+
+    // Показать каталог
+    window.showCatalog = function() {
+      document.getElementById('catalogView').style.display = 'block';
+      document.getElementById('ordersHistoryView').style.display = 'none';
+      document.getElementById('catalogBtn').classList.add('btn-danger');
+      document.getElementById('catalogBtn').classList.remove('btn-outline-danger');
+      document.getElementById('ordersHistoryBtn').classList.remove('btn-danger');
+      document.getElementById('ordersHistoryBtn').classList.add('btn-outline-danger');
+    }
+
+    // Показать историю заказов
+    window.showOrdersHistory = function() {
+      document.getElementById('catalogView').style.display = 'none';
+      document.getElementById('ordersHistoryView').style.display = 'block';
+      document.getElementById('catalogBtn').classList.remove('btn-danger');
+      document.getElementById('catalogBtn').classList.add('btn-outline-danger');
+      document.getElementById('ordersHistoryBtn').classList.add('btn-danger');
+      document.getElementById('ordersHistoryBtn').classList.remove('btn-outline-danger');
+
+      loadUserOrders();
+    }
+
+    // Загрузка заказов пользователя
+    async function loadUserOrders() {
+      const listDiv = document.getElementById('userOrdersList');
+      listDiv.innerHTML = '<p class="text-center text-muted">Загрузка...</p>';
+
+      try {
+        const response = await fetch(`${API_URL}/user/${currentUser.id}/orders`);
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+          renderUserOrders(data.orders);
+        } else {
+          listDiv.innerHTML = '<p class="text-center text-danger">Ошибка загрузки заказов</p>';
+        }
+      } catch (err) {
+        listDiv.innerHTML = '<p class="text-center text-danger">Ошибка подключения к серверу</p>';
+      }
+    }
+
+    // Отрисовка заказов пользователя
+    function renderUserOrders(orders) {
+      const listDiv = document.getElementById('userOrdersList');
+
+      if (orders.length === 0) {
+        listDiv.innerHTML = '<div class="text-center py-5"><p class="text-muted">У вас пока нет заказов</p><button class="btn btn-danger" onclick="showCatalog()">Перейти к каталогу</button></div>';
+        return;
+      }
+
+      const statusNames = {
+        'new': 'Новый',
+        'preparing': 'Готовится',
+        'ready': 'Готов к выдаче',
+        'delivered': 'Доставлен'
+      };
+
+      const statusIcons = {
+        'new': '🆕',
+        'preparing': '👨‍🍳',
+        'ready': '✅',
+        'delivered': '🎉'
+      };
+
+      listDiv.innerHTML = orders.map(order => {
+        const items = JSON.parse(order.items);
+        return `
+          <div class="order-history-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5>Заказ #${order.id}</h5>
+                <small class="text-muted">${order.created_at}</small>
+              </div>
+              <span class="order-status-badge status-${order.status}">
+                ${statusIcons[order.status]} ${statusNames[order.status]}
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <strong>Товары:</strong>
+              <ul class="mb-0 mt-2">
+                ${items.map(item => `
+                  <li>${item.name} x${item.quantity} — ${(item.price * item.quantity).toLocaleString()} сум</li>
+                `).join('')}
+              </ul>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="pizza-price">${order.total_price.toLocaleString()} сум</strong>
+              ${order.status === 'new' || order.status === 'preparing' ?
+                '<small class="text-muted">⏱️ Ожидайте...</small>' :
+                order.status === 'ready' ?
+                '<small class="text-success">✨ Можете забрать!</small>' :
+                '<small class="text-muted">Спасибо за заказ!</small>'}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // Отображение меню
