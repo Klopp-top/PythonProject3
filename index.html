@@ -446,6 +446,18 @@
 
     <!-- История заказов -->
     <div id="ordersHistoryView" style="display: none;">
+      <!-- Фильтр активные/выполненные -->
+      <div class="mb-3">
+        <div class="btn-group w-100" role="group">
+          <button type="button" class="btn btn-danger btn-sm" id="activeOrdersBtn" onclick="filterOrders('active')">
+            ⏱️ Активные
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" id="completedOrdersBtn" onclick="filterOrders('completed')">
+            ✅ Выполненные
+          </button>
+        </div>
+      </div>
+
       <div id="userOrdersList">
         <p class="text-center text-muted">Загрузка заказов...</p>
       </div>
@@ -492,6 +504,8 @@
     let currentUser = null;
     let cart = [];
     let currentCategory = 'pizza';
+    let allUserOrders = []; // Храним все заказы
+    let orderFilter = 'active'; // Текущий фильтр
 
     // Меню по категориям
     const menuItems = {
@@ -635,7 +649,28 @@
       document.getElementById('ordersHistoryBtn').classList.add('btn-danger');
       document.getElementById('ordersHistoryBtn').classList.remove('btn-outline-danger');
 
+      orderFilter = 'active'; // По умолчанию показываем активные
       loadUserOrders();
+    }
+
+    // Фильтр заказов
+    window.filterOrders = function(filter) {
+      orderFilter = filter;
+
+      // Обновляем кнопки
+      if (filter === 'active') {
+        document.getElementById('activeOrdersBtn').classList.add('btn-danger');
+        document.getElementById('activeOrdersBtn').classList.remove('btn-outline-danger');
+        document.getElementById('completedOrdersBtn').classList.remove('btn-danger');
+        document.getElementById('completedOrdersBtn').classList.add('btn-outline-danger');
+      } else {
+        document.getElementById('completedOrdersBtn').classList.add('btn-danger');
+        document.getElementById('completedOrdersBtn').classList.remove('btn-outline-danger');
+        document.getElementById('activeOrdersBtn').classList.remove('btn-danger');
+        document.getElementById('activeOrdersBtn').classList.add('btn-outline-danger');
+      }
+
+      renderUserOrders(allUserOrders);
     }
 
     // Загрузка заказов пользователя
@@ -648,6 +683,7 @@
         const data = await response.json();
 
         if (data.status === 'ok') {
+          allUserOrders = data.orders;
           renderUserOrders(data.orders);
         } else {
           listDiv.innerHTML = '<p class="text-center text-danger">Ошибка загрузки заказов</p>';
@@ -661,8 +697,21 @@
     function renderUserOrders(orders) {
       const listDiv = document.getElementById('userOrdersList');
 
-      if (orders.length === 0) {
-        listDiv.innerHTML = '<div class="text-center py-5"><p class="text-muted">У вас пока нет заказов</p><button class="btn btn-danger" onclick="showCatalog()">Перейти к каталогу</button></div>';
+      // Фильтруем заказы
+      let filteredOrders;
+      if (orderFilter === 'active') {
+        // Активные: new, preparing, ready
+        filteredOrders = orders.filter(o => o.status === 'new' || o.status === 'preparing' || o.status === 'ready');
+      } else {
+        // Выполненные: delivered
+        filteredOrders = orders.filter(o => o.status === 'delivered');
+      }
+
+      if (filteredOrders.length === 0) {
+        const emptyMessage = orderFilter === 'active'
+          ? '<div class="text-center py-5"><p class="text-muted">Нет активных заказов</p><button class="btn btn-danger" onclick="showCatalog()">Сделать заказ</button></div>'
+          : '<div class="text-center py-5"><p class="text-muted">Нет выполненных заказов</p></div>';
+        listDiv.innerHTML = emptyMessage;
         return;
       }
 
@@ -680,7 +729,7 @@
         'delivered': '🎉'
       };
 
-      listDiv.innerHTML = orders.map(order => {
+      listDiv.innerHTML = filteredOrders.map(order => {
         const items = JSON.parse(order.items);
         return `
           <div class="order-history-card">
@@ -706,10 +755,10 @@
             <div class="d-flex justify-content-between align-items-center">
               <strong class="pizza-price">${order.total_price.toLocaleString()} сум</strong>
               ${order.status === 'new' || order.status === 'preparing' ?
-                '<small class="text-muted">⏱️ Ожидайте...</small>' :
+                '<small class="text-muted">⏱️ Готовим ваш заказ...</small>' :
                 order.status === 'ready' ?
-                '<small class="text-success">✨ Можете забрать!</small>' :
-                '<small class="text-muted">Спасибо за заказ!</small>'}
+                '<small class="text-success">✨ Готов! Можете забрать!</small>' :
+                '<small class="text-muted">✅ Спасибо за заказ!</small>'}
             </div>
           </div>
         `;
@@ -995,4 +1044,4 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html> 
