@@ -313,7 +313,7 @@
 <body>
 
   <div class="container" id="authContainer">
-    <h1>🍕 Пиццерия</h1>
+    <h1>GreyCat</h1>
     <img src="/img.PNG" class="img-fluid mb-3" />
 
     <ul class="nav nav-tabs" role="tablist">
@@ -384,7 +384,7 @@
     </div>
   </div>
 
-  <footer>© 2025 Моя Пиццерия</footer>
+  <footer>© GreyCat</footer>
 
   <!-- Меню с пиццами (скрыто по умолчанию) -->
   <div class="container" id="menuContainer" style="display: none;">
@@ -450,10 +450,10 @@
       <div class="mb-3">
         <div class="btn-group w-100" role="group">
           <button type="button" class="btn btn-danger btn-sm" id="activeOrdersBtn" onclick="filterOrders('active')">
-            ⏱️ Активные
+            ⏱️ Активные заказы
           </button>
           <button type="button" class="btn btn-outline-danger btn-sm" id="completedOrdersBtn" onclick="filterOrders('completed')">
-            ✅ Выполненные
+            ✅ История заказов
           </button>
         </div>
       </div>
@@ -726,7 +726,7 @@
         'new': '🆕',
         'preparing': '👨‍🍳',
         'ready': '✅',
-        'delivered': '🎉'
+        'delivered': '🚚'
       };
 
       listDiv.innerHTML = filteredOrders.map(order => {
