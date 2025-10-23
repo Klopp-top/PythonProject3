@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GreyCat</title>
+  <title>Пиццерия 🍕</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
@@ -349,7 +349,7 @@
 <body>
 
   <div class="container" id="authContainer">
-    <h1>GreyCat</h1>
+    <h1>🍕 Пиццерия</h1>
     <img src="/img.png" class="img-fluid mb-3" />
 
     <ul class="nav nav-tabs" role="tablist">
@@ -523,8 +523,65 @@
               <strong>Итого:</strong>
               <strong class="pizza-price" id="cartTotal">0 сум</strong>
             </div>
-            <button class="btn btn-danger w-100" id="orderBtn">Оформить заказ</button>
+            <button class="btn btn-danger w-100" id="proceedToCheckout">Оформить заказ</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно оформления заказа -->
+  <div class="modal fade" id="checkoutModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">📋 Оформление заказа</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkoutForm">
+            <!-- Тип доставки -->
+            <div class="mb-3">
+              <label class="form-label"><strong>Способ получения:</strong></label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="deliveryType" id="pickup" value="pickup" checked>
+                <label class="btn btn-outline-danger" for="pickup">🏪 Самовывоз</label>
+
+                <input type="radio" class="btn-check" name="deliveryType" id="delivery" value="delivery">
+                <label class="btn btn-outline-danger" for="delivery">🚚 Доставка</label>
+              </div>
+            </div>
+
+            <!-- Адрес доставки (показывается только при выборе доставки) -->
+            <div class="mb-3" id="addressBlock" style="display: none;">
+              <label for="deliveryAddress" class="form-label">Адрес доставки</label>
+              <input type="text" class="form-control" id="deliveryAddress" placeholder="Введите адрес">
+              <div class="form-text">Укажите улицу, дом, квартиру</div>
+            </div>
+
+            <!-- Способ оплаты -->
+            <div class="mb-3">
+              <label class="form-label"><strong>Способ оплаты:</strong></label>
+              <select class="form-select" id="paymentMethod" required>
+                <option value="">Выберите способ оплаты</option>
+                <option value="cash">💵 Наличными при получении</option>
+                <option value="card">💳 Картой при получении</option>
+                <option value="online">🌐 Онлайн оплата</option>
+              </select>
+            </div>
+
+            <!-- Итоговая сумма -->
+            <div class="alert alert-success">
+              <div class="d-flex justify-content-between">
+                <strong>Итого к оплате:</strong>
+                <strong id="checkoutTotal">0 сум</strong>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-danger" id="confirmOrderBtn">Подтвердить заказ</button>
         </div>
       </div>
     </div>
@@ -767,6 +824,13 @@
 
       listDiv.innerHTML = filteredOrders.map(order => {
         const items = JSON.parse(order.items);
+        const deliveryText = order.delivery_type === 'pickup' ? '🏪 Самовывоз' : '🚚 Доставка';
+        const paymentText = {
+          'cash': '💵 Наличными',
+          'card': '💳 Картой',
+          'online': '🌐 Оплачено'
+        }[order.payment_method];
+
         return `
           <div class="order-history-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -777,6 +841,16 @@
               <span class="order-status-badge status-${order.status}">
                 ${statusIcons[order.status]} ${statusNames[order.status]}
               </span>
+            </div>
+
+            <div class="mb-2">
+              <strong>${deliveryText}</strong>
+              ${order.delivery_type === 'delivery' ? `<br><small class="text-muted">📍 ${order.address}</small>` : ''}
+            </div>
+
+            <div class="mb-3">
+              <strong>Оплата:</strong> ${paymentText}
+              ${order.payment_status === 'paid' ? '<span class="badge bg-success ms-2">✓ Оплачено</span>' : ''}
             </div>
 
             <div class="mb-3">
@@ -907,10 +981,50 @@
       cartModal.show();
     });
 
-    // Оформление заказа
-    document.getElementById('orderBtn').addEventListener('click', async () => {
+    // Оформление заказа - открываем форму
+    document.getElementById('proceedToCheckout').addEventListener('click', () => {
       if (cart.length === 0) {
         showNotification('Корзина пустая!');
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('checkoutTotal').textContent = total.toLocaleString() + ' сум';
+
+      // Закрываем корзину и открываем форму оформления
+      bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+      const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+      checkoutModal.show();
+    });
+
+    // Переключение типа доставки
+    document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const addressBlock = document.getElementById('addressBlock');
+        if (e.target.value === 'delivery') {
+          addressBlock.style.display = 'block';
+          document.getElementById('deliveryAddress').required = true;
+        } else {
+          addressBlock.style.display = 'none';
+          document.getElementById('deliveryAddress').required = false;
+        }
+      });
+    });
+
+    // Подтверждение заказа
+    document.getElementById('confirmOrderBtn').addEventListener('click', async () => {
+      const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
+      const address = document.getElementById('deliveryAddress').value.trim();
+      const paymentMethod = document.getElementById('paymentMethod').value;
+
+      // Валидация
+      if (!paymentMethod) {
+        showNotification('Выберите способ оплаты!');
+        return;
+      }
+
+      if (deliveryType === 'delivery' && !address) {
+        showNotification('Укажите адрес доставки!');
         return;
       }
 
@@ -932,26 +1046,33 @@
             phone: currentUser.phone,
             username: currentUser.username,
             items: JSON.stringify(items),
-            total_price: total
+            total_price: total,
+            delivery_type: deliveryType,
+            address: deliveryType === 'delivery' ? address : '',
+            payment_method: paymentMethod
           })
         });
 
         const data = await response.json();
 
         if (data.status === 'ok') {
-          const cartText = cart.map(item =>
-            `${item.name} x${item.quantity} - ${(item.price * item.quantity).toLocaleString()} сум`
-          ).join('\n');
+          const deliveryText = deliveryType === 'pickup' ? 'Самовывоз' : `Доставка по адресу: ${address}`;
+          const paymentText = {
+            'cash': 'Наличными при получении',
+            'card': 'Картой при получении',
+            'online': 'Оплачено онлайн'
+          }[paymentMethod];
 
-          showNotification(`✅ Заказ №${data.order_id} оформлен!\n\n${cartText}\n\nИтого: ${total.toLocaleString()} сум\n\nОжидайте звонка!`);
+          showNotification(`✅ Заказ №${data.order_id} оформлен!\n\n${deliveryText}\n${paymentText}\n\nИтого: ${total.toLocaleString()} сум\n\nОжидайте звонка!`);
 
-          // Очищаем корзину
+          // Очищаем корзину и форму
           cart = [];
           updateCartCount();
-          renderCart();
+          document.getElementById('checkoutForm').reset();
+          document.getElementById('addressBlock').style.display = 'none';
 
           // Закрываем модальное окно
-          bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+          bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
         } else {
           showNotification('Ошибка при оформлении заказа');
         }
