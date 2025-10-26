@@ -13,6 +13,9 @@ BOT_TOKEN = '7261530454:AAFyfYScsoMSdHyQ2N8nf4oQ0MUMW7GXfAc'
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
+# Временное хранилище локаций пользователей
+user_locations = {}
+
 
 def send_telegram_message(chat_id, text):
     """Отправка сообщения в Telegram"""
@@ -37,6 +40,64 @@ async def cmd_start(message: types.Message):
         )
     )
     await message.answer("Привет! Жми кнопку и регистрируйся:", reply_markup=keyboard)
+
+
+# Временное хранилище локаций пользователей (в продакшене используй Redis)
+user_locations = {}
+
+
+@dp.message_handler(content_types=['location'])
+async def handle_location(message: types.Message):
+    """Обработка полученной геолокации"""
+    user_id = message.from_user.id
+    lat = message.location.latitude
+    lon = message.location.longitude
+
+    # Проверяем что это Бухарская область
+    # Бухара: широта 39.5-40.3, долгота 63.3-64.9
+    is_bukhara = (lat >= 39.5 and lat <= 40.3) and (lon >= 63.3 and lon <= 64.9)
+
+    if not is_bukhara:
+        await message.answer(
+            "❌ К сожалению, мы не доставляем так далеко.\n\n"
+            "Доставка только по Бухарской области.",
+            reply_markup=types.InlineKeyboardMarkup().add(
+                types.InlineKeyboardButton(
+                    text="Вернуться в приложение",
+                    web_app=types.WebAppInfo(url="https://python-project3-brown.vercel.app/")
+                )
+            )
+        )
+        return
+
+    # Получаем адрес через API
+    try:
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&accept-language=ru"
+            async with session.get(url) as resp:
+                data = await resp.json()
+                address = data.get('display_name', f'Координаты: {lat}, {lon}')
+    except:
+        address = f'Координаты: {lat}, {lon}'
+
+    # Сохраняем локацию пользователя
+    user_locations[user_id] = {
+        'lat': lat,
+        'lon': lon,
+        'address': address
+    }
+
+    await message.answer(
+        f"✅ Адрес доставки получен!\n\n📍 {address}\n\n"
+        "Теперь вернитесь в приложение и завершите оформление заказа.",
+        reply_markup=types.InlineKeyboardMarkup().add(
+            types.InlineKeyboardButton(
+                text="Вернуться в приложение",
+                web_app=types.WebAppInfo(url="https://python-project3-brown.vercel.app/")
+            )
+        )
+    )
 
 
 @app.route('/register', methods=['POST'])
@@ -122,11 +183,15 @@ def create_order():
     username = data.get("username")
     items = data.get("items")  # JSON строка
     total_price = data.get("total_price")
+    delivery_type = data.get("delivery_type")
+    address = data.get("address", "")
+    payment_method = data.get("payment_method")
 
-    if not all([user_id, phone, username, items, total_price]):
+    if not all([user_id, phone, username, items, total_price, delivery_type, payment_method]):
         return jsonify({"status": "error", "message": "Не все данные заказа"}), 400
 
-    order_id = db.add_order(user_id, phone, username, items, total_price)
+    order_id = db.add_order(user_id, phone, username, items, total_price,
+                            delivery_type, address, payment_method)
     if order_id:
         return jsonify({"status": "ok", "message": "Заказ оформлен!", "order_id": order_id})
     else:
@@ -146,6 +211,10 @@ def get_orders():
             "items": order.items,
             "total_price": order.total_price,
             "status": order.status,
+            "delivery_type": order.delivery_type,
+            "address": order.address,
+            "payment_method": order.payment_method,
+            "payment_status": order.payment_status,
             "created_at": order.created_at
         })
     return jsonify({"status": "ok", "orders": orders_list})
@@ -176,9 +245,30 @@ def get_user_orders(user_id):
             "items": order.items,
             "total_price": order.total_price,
             "status": order.status,
+            "delivery_type": order.delivery_type,
+            "address": order.address,
+            "payment_method": order.payment_method,
+            "payment_status": order.payment_status,
             "created_at": order.created_at
         })
     return jsonify({"status": "ok", "orders": orders_list})
+
+
+@app.route('/user/<int:user_id>/location', methods=['GET'])
+def get_user_location(user_id):
+    """Получить сохранённую локацию пользователя"""
+    from main import user_locations  # Импортируем из модуля бота
+
+    if user_id in user_locations:
+        return jsonify({
+            "status": "ok",
+            "location": user_locations[user_id]
+        })
+    else:
+        return jsonify({
+            "status": "error",
+            "message": "Локация не найдена"
+        }), 404
 
 
 if __name__ == '__main__':

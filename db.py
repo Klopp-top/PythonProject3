@@ -38,6 +38,10 @@ class Order(Base):
     items = Column(String)  # JSON строка с товарами
     total_price = Column(Integer)
     status = Column(String, default="new")  # new, preparing, ready, delivered
+    delivery_type = Column(String)  # pickup, delivery
+    address = Column(String, nullable=True)  # Адрес доставки
+    payment_method = Column(String)  # cash, card, online
+    payment_status = Column(String, default="pending")  # pending, paid
     created_at = Column(String)
 
 
@@ -100,7 +104,6 @@ def authenticate_user_by_identifier(identifier: str, password: str):
     session.close()
     return user
 
-
 # Проверка и подтверждение кода
 def verify_user_code(telegram_id: int, code: str):
     session = SessionLocal()
@@ -118,31 +121,6 @@ def verify_user_code(telegram_id: int, code: str):
         return True
     session.close()
     return False
-
-# Добавить заказ
-def add_order(user_id: int, phone: str, username: str, items: str, total_price: int):
-    session = SessionLocal()
-    try:
-        from datetime import datetime
-        order = Order(
-            user_id=user_id,
-            phone=phone,
-            username=username,
-            items=items,
-            total_price=total_price,
-            status="new",
-            created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        session.add(order)
-        session.commit()
-        order_id = order.id
-        session.close()
-        return order_id
-    except Exception as e:
-        session.rollback()
-        print(f"Ошибка при добавлении заказа: {e}")
-        session.close()
-        return None
 
 # Получить все заказы
 def get_all_orders():
@@ -169,6 +147,46 @@ def update_order_status(order_id: int, status: str):
         session.close()
         return False
 
+
+# Получить заказы пользователя
+def get_user_orders(user_id: int):
+    session = SessionLocal()
+    orders = session.query(Order).filter(Order.user_id == user_id).order_by(Order.id.desc()).all()
+    session.close()
+    return orders
+
+
+# Добавить заказ
+def add_order(user_id: int, phone: str, username: str, items: str, total_price: int,
+              delivery_type: str, address: str, payment_method: str):
+    session = SessionLocal()
+    try:
+        from datetime import datetime
+        payment_status = "paid" if payment_method == "online" else "pending"
+
+        order = Order(
+            user_id=user_id,
+            phone=phone,
+            username=username,
+            items=items,
+            total_price=total_price,
+            status="new",
+            delivery_type=delivery_type,
+            address=address,
+            payment_method=payment_method,
+            payment_status=payment_status,
+            created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        session.add(order)
+        session.commit()
+        order_id = order.id
+        session.close()
+        return order_id
+    except Exception as e:
+        session.rollback()
+        print(f"Ошибка при добавлении заказа: {e}")
+        session.close()
+        return None
 
 if __name__ == "__main__":
     init_db()

@@ -155,8 +155,12 @@ class PizzaAdminApp:
         return value_label
 
     def load_orders(self):
+        # Запускаем загрузку в отдельном потоке чтобы не блокировать UI
+        threading.Thread(target=self._load_orders_thread, daemon=True).start()
+
+    def _load_orders_thread(self):
         try:
-            self.status_label.config(text="Загрузка заказов...")
+            self.root.after(0, lambda: self.status_label.config(text="Загрузка заказов..."))
             response = requests.get(f"{self.API_URL}/orders", timeout=5)
             data = response.json()
 
@@ -168,14 +172,17 @@ class PizzaAdminApp:
                 if filter_status != "all":
                     orders = [o for o in orders if o["status"] == filter_status]
 
-                self.render_orders(orders)
-                self.update_stats(data["orders"])  # Статистика по всем заказам
-                self.status_label.config(text=f"Обновлено: {datetime.now().strftime('%H:%M:%S')}")
+                # Обновляем UI в главном потоке
+                self.root.after(0, lambda: self.render_orders(orders))
+                self.root.after(0, lambda: self.update_stats(data["orders"]))
+                self.root.after(0, lambda: self.status_label.config(
+                    text=f"Обновлено: {datetime.now().strftime('%H:%M:%S')}"))
             else:
-                messagebox.showerror("Ошибка", "Не удалось загрузить заказы")
+                self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить заказы"))
         except Exception as e:
-            self.status_label.config(text=f"Ошибка: {str(e)}")
-            messagebox.showerror("Ошибка подключения", f"Не удалось подключиться к серверу:\n{str(e)}")
+            self.root.after(0, lambda: self.status_label.config(text=f"Ошибка: {str(e)}"))
+            self.root.after(0, lambda: messagebox.showerror("Ошибка подключения",
+                                                            f"Не удалось подключиться к серверу:\n{str(e)}"))
 
     def render_orders(self, orders):
         # Очищаем предыдущие заказы
@@ -270,6 +277,83 @@ class PizzaAdminApp:
             font=("Arial", 11)
         ).pack(side=tk.LEFT)
 
+        # Тип доставки и адрес
+        delivery_frame = tk.Frame(content, bg="white")
+        delivery_frame.pack(fill=tk.X, pady=5)
+
+        delivery_type_text = "🏪 Самовывоз" if order.get('delivery_type') == 'pickup' else "🚚 Доставка"
+        delivery_icon = "🏪" if order.get('delivery_type') == 'pickup' else "🚚"
+
+        delivery_label = tk.Label(
+            delivery_frame,
+            text=f"{delivery_icon} {delivery_type_text}",
+            bg="white",
+            font=("Arial", 11, "bold"),
+            fg="#1a5f1a"
+        )
+        delivery_label.pack(side=tk.LEFT)
+
+        # Показываем адрес если доставка
+        if order.get('delivery_type') == 'delivery' and order.get('address'):
+            address_label = tk.Label(
+                delivery_frame,
+                text=f"📍 {order['address']}",
+                bg="white",
+                font=("Arial", 10),
+                fg="#666"
+            )
+            address_label.pack(side=tk.LEFT, padx=(10, 0))
+
+        # Способ оплаты
+        payment_frame = tk.Frame(content, bg="white")
+        payment_frame.pack(fill=tk.X, pady=5)
+
+        payment_icons = {
+            'cash': '💵',
+            'card': '💳',
+            'online': '🌐'
+        }
+        payment_names = {
+            'cash': 'Наличными при получении',
+            'card': 'Картой при получении',
+            'online': 'Оплачено онлайн'
+        }
+
+        payment_icon = payment_icons.get(order.get('payment_method'), '💵')
+        payment_name = payment_names.get(order.get('payment_method'), 'Наличными')
+
+        tk.Label(
+            payment_frame,
+            text=f"{payment_icon} {payment_name}",
+            bg="white",
+            font=("Arial", 11, "bold"),
+            fg="#1a5f1a"
+        ).pack(side=tk.LEFT)
+
+        # Статус оплаты
+        if order.get('payment_status') == 'paid':
+            paid_badge = tk.Label(
+                payment_frame,
+                text="✓ Оплачено",
+                bg="#66bb6a",
+                fg="white",
+                font=("Arial", 9, "bold"),
+                padx=8,
+                pady=3
+            )
+            paid_badge.pack(side=tk.LEFT, padx=10)
+        else:
+            unpaid_badge = tk.Label(
+                payment_frame,
+                text="Ожидает оплаты",
+                bg="#ffa726",
+                fg="white",
+                font=("Arial", 9, "bold"),
+                padx=8,
+                pady=3
+            )
+            unpaid_badge.pack(side=tk.LEFT, padx=10)
+
         # Товары
         items_frame = tk.Frame(content, bg="white")
         items_frame.pack(fill=tk.X, pady=10)
@@ -332,6 +416,10 @@ class PizzaAdminApp:
                 btn.pack(side=tk.LEFT, padx=3)
 
     def update_status(self, order_id, status):
+        # Запускаем в отдельном потоке
+        threading.Thread(target=self._update_status_thread, args=(order_id, status), daemon=True).start()
+
+    def _update_status_thread(self, order_id, status):
         try:
             response = requests.put(
                 f"{self.API_URL}/order/{order_id}/status",
@@ -341,12 +429,12 @@ class PizzaAdminApp:
             data = response.json()
 
             if data["status"] == "ok":
-                self.load_orders()
-                messagebox.showinfo("Успех", f"Статус заказа #{order_id} обновлен!")
+                self.root.after(0, lambda: self.load_orders())
+                self.root.after(0, lambda: messagebox.showinfo("Успех", f"Статус заказа #{order_id} обновлен!"))
             else:
-                messagebox.showerror("Ошибка", "Не удалось обновить статус")
+                self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось обновить статус"))
         except Exception as e:
-            messagebox.showerror("Ошибка", f"Ошибка подключения:\n{str(e)}")
+            self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка подключения:\n{str(e)}"))
 
     def update_stats(self, orders):
         total = len(orders)
@@ -367,7 +455,8 @@ class PizzaAdminApp:
         while self.auto_refresh:
             time.sleep(10)  # Обновление каждые 10 секунд
             try:
-                self.root.after(0, self.load_orders)
+                # Запускаем загрузку в отдельном потоке
+                threading.Thread(target=self._load_orders_thread, daemon=True).start()
             except:
                 break
 
