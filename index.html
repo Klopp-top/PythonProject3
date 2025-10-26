@@ -555,8 +555,15 @@
             <!-- Адрес доставки (показывается только при выборе доставки) -->
             <div class="mb-3" id="addressBlock" style="display: none;">
               <label for="deliveryAddress" class="form-label">Адрес доставки</label>
-              <input type="text" class="form-control" id="deliveryAddress" placeholder="Введите адрес">
-              <div class="form-text">Укажите улицу, дом, квартиру</div>
+              <div class="input-group mb-2">
+                <input type="text" class="form-control" id="deliveryAddress" placeholder="Введите адрес или выберите на карте" readonly>
+                <button class="btn btn-outline-danger" type="button" id="selectLocationBtn">
+                  📍 Указать на карте
+                </button>
+              </div>
+              <div class="form-text">Нажмите кнопку чтобы выбрать точное местоположение</div>
+              <input type="hidden" id="locationLat">
+              <input type="hidden" id="locationLon">
             </div>
 
             <!-- Способ оплаты -->
