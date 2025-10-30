@@ -610,6 +610,56 @@
     let allUserOrders = []; // Храним все заказы
     let orderFilter = 'active'; // Текущий фильтр
 
+    // Загрузка сохранённых данных при старте
+    function loadSavedData() {
+      // Загружаем пользователя (срок действия 30 дней)
+      const savedUser = localStorage.getItem('currentUser');
+      const userExpiry = localStorage.getItem('userExpiry');
+
+      if (savedUser && userExpiry) {
+        const expiryDate = new Date(parseInt(userExpiry));
+        const now = new Date();
+
+        if (now < expiryDate) {
+          // Сессия ещё действительна
+          currentUser = JSON.parse(savedUser);
+          document.getElementById('authContainer').style.display = 'none';
+          document.getElementById('menuContainer').style.display = 'block';
+          document.getElementById('userName').textContent = currentUser.username;
+          showCategory('pizza');
+        } else {
+          // Сессия истекла, очищаем
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('userExpiry');
+        }
+      }
+
+      // Загружаем корзину
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartCount();
+      }
+    }
+
+    // Сохранение данных
+    function saveUserSession(user) {
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+
+      // Устанавливаем срок действия 30 дней
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      localStorage.setItem('userExpiry', expiryDate.getTime().toString());
+    }
+
+    function saveCart() {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    // Загружаем данные при загрузке страницы
+    loadSavedData();
+
     // Меню по категориям
     const menuItems = {
       pizza: [
@@ -697,6 +747,7 @@
       }
 
       updateCartCount();
+      saveCart(); // Сохраняем корзину
       showNotification(`${item.name} добавлен в корзину!`);
     }
 
@@ -944,6 +995,7 @@
       if (item) {
         item.quantity++;
         updateCartCount();
+        saveCart(); // Сохраняем
         renderCart();
       }
     }
@@ -958,6 +1010,7 @@
           cart = cart.filter(i => i.id !== itemId);
         }
         updateCartCount();
+        saveCart(); // Сохраняем
         renderCart();
       }
     }
@@ -966,6 +1019,7 @@
     window.removeFromCart = function(itemId) {
       cart = cart.filter(i => i.id !== itemId);
       updateCartCount();
+      saveCart(); // Сохраняем
       renderCart();
       showNotification('Товар удален из корзины');
     }
@@ -979,6 +1033,12 @@
     document.getElementById('logoutBtn').addEventListener('click', () => {
       currentUser = null;
       cart = [];
+
+      // Очищаем localStorage
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('userExpiry');
+      localStorage.removeItem('cart');
+
       document.getElementById('authContainer').style.display = 'block';
       document.getElementById('menuContainer').style.display = 'none';
       updateCartCount();
@@ -1146,6 +1206,10 @@
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}<br>Добро пожаловать, ${data.user.username}!</div>`;
           // Сохраняем user.id для заказов
           data.user.id = data.user.id || data.user.telegram_id;
+
+          // Сохраняем сессию на 30 дней
+          saveUserSession(data.user);
+
           setTimeout(() => showMenu(data.user), 1000);
         } else {
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
