@@ -634,23 +634,39 @@
         
         if (now < expiryDate) {
           // Сессия ещё действительна
-          currentUser = JSON.parse(savedUser);
-          document.getElementById('authContainer').style.display = 'none';
-          document.getElementById('menuContainer').style.display = 'block';
-          document.getElementById('userName').textContent = currentUser.username;
-          showCategory('pizza');
+          try {
+            currentUser = JSON.parse(savedUser);
+
+            // Проверяем что у пользователя есть все нужные поля
+            if (!currentUser.id) {
+              currentUser.id = currentUser.telegram_id;
+            }
+
+            showMenu(currentUser);
+          } catch (e) {
+            // Если ошибка парсинга - очищаем
+            console.error('Ошибка загрузки пользователя:', e);
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userExpiry');
+          }
         } else {
           // Сессия истекла, очищаем
           localStorage.removeItem('currentUser');
           localStorage.removeItem('userExpiry');
         }
       }
-      
+
       // Загружаем корзину
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
-        cart = JSON.parse(savedCart);
-        updateCartCount();
+        try {
+          cart = JSON.parse(savedCart);
+          updateCartCount();
+        } catch (e) {
+          console.error('Ошибка загрузки корзины:', e);
+          localStorage.removeItem('cart');
+          cart = [];
+        }
       }
     }
 
@@ -658,7 +674,7 @@
     function saveUserSession(user) {
       currentUser = user;
       localStorage.setItem('currentUser', JSON.stringify(user));
-      
+
       // Устанавливаем срок действия 30 дней
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 30);
@@ -747,17 +763,17 @@
         item = menuItems[category].find(p => p.id === itemId);
         if (item) break;
       }
-      
+
       if (!item) return;
-      
+
       const existingItem = cart.find(i => i.id === itemId);
-      
+
       if (existingItem) {
         existingItem.quantity++;
       } else {
         cart.push({ ...item, quantity: 1 });
       }
-      
+
       updateCartCount();
       saveCart(); // Сохраняем корзину
       showNotification(`${item.name} добавлен в корзину!`);
@@ -766,17 +782,17 @@
     // Показать категорию (глобальная функция)
     window.showCategory = function(category) {
       currentCategory = category;
-      
+
       // Обновляем активную кнопку
       document.querySelectorAll('.nav-pills .nav-link').forEach(btn => {
         btn.classList.remove('active');
       });
       document.querySelector(`[data-category="${category}"]`).classList.add('active');
-      
+
       // Отображаем товары категории
       const items = menuItems[category] || [];
       const pizzaList = document.getElementById('pizzaList');
-      
+
       pizzaList.innerHTML = items.map(item => `
         <div class="col-md-6">
           <div class="pizza-card">
@@ -814,7 +830,7 @@
       document.getElementById('catalogBtn').classList.add('btn-outline-danger');
       document.getElementById('ordersHistoryBtn').classList.add('btn-danger');
       document.getElementById('ordersHistoryBtn').classList.remove('btn-outline-danger');
-      
+
       orderFilter = 'active'; // По умолчанию показываем активные
       loadUserOrders();
     }
@@ -822,7 +838,7 @@
     // Фильтр заказов
     window.filterOrders = function(filter) {
       orderFilter = filter;
-      
+
       // Обновляем кнопки
       if (filter === 'active') {
         document.getElementById('activeOrdersBtn').classList.add('btn-danger');
@@ -835,7 +851,7 @@
         document.getElementById('activeOrdersBtn').classList.remove('btn-danger');
         document.getElementById('activeOrdersBtn').classList.add('btn-outline-danger');
       }
-      
+
       renderUserOrders(allUserOrders);
     }
 
@@ -843,11 +859,11 @@
     async function loadUserOrders() {
       const listDiv = document.getElementById('userOrdersList');
       listDiv.innerHTML = '<p class="text-center text-muted">Загрузка...</p>';
-      
+
       try {
         const response = await fetch(`${API_URL}/user/${currentUser.id}/orders`);
         const data = await response.json();
-        
+
         if (data.status === 'ok') {
           allUserOrders = data.orders;
           renderUserOrders(data.orders);
@@ -862,7 +878,7 @@
     // Отрисовка заказов пользователя
     function renderUserOrders(orders) {
       const listDiv = document.getElementById('userOrdersList');
-      
+
       // Фильтруем заказы
       let filteredOrders;
       if (orderFilter === 'active') {
@@ -872,29 +888,29 @@
         // Выполненные: delivered
         filteredOrders = orders.filter(o => o.status === 'delivered');
       }
-      
+
       if (filteredOrders.length === 0) {
-        const emptyMessage = orderFilter === 'active' 
+        const emptyMessage = orderFilter === 'active'
           ? '<div class="text-center py-5"><p class="text-muted">Нет активных заказов</p><button class="btn btn-danger" onclick="showCatalog()">Сделать заказ</button></div>'
           : '<div class="text-center py-5"><p class="text-muted">Нет выполненных заказов</p></div>';
         listDiv.innerHTML = emptyMessage;
         return;
       }
-      
+
       const statusNames = {
         'new': 'Новый',
         'preparing': 'Готовится',
         'ready': 'Готов к выдаче',
         'delivered': 'Доставлен'
       };
-      
+
       const statusIcons = {
         'new': '🆕',
         'preparing': '👨‍🍳',
         'ready': '✅',
         'delivered': '🎉'
       };
-      
+
       listDiv.innerHTML = filteredOrders.map(order => {
         const items = JSON.parse(order.items);
         const deliveryText = order.delivery_type === 'pickup' ? '🏪 Самовывоз' : '🚚 Доставка';
@@ -903,7 +919,7 @@
           'card': '💳 Картой',
           'online': '🌐 Оплачено'
         }[order.payment_method];
-        
+
         return `
           <div class="order-history-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -915,17 +931,17 @@
                 ${statusIcons[order.status]} ${statusNames[order.status]}
               </span>
             </div>
-            
+
             <div class="mb-2">
               <strong>${deliveryText}</strong>
               ${order.delivery_type === 'delivery' ? `<br><small class="text-muted">📍 ${order.address}</small>` : ''}
             </div>
-            
+
             <div class="mb-3">
               <strong>Оплата:</strong> ${paymentText}
               ${order.payment_status === 'paid' ? '<span class="badge bg-success ms-2">✓ Оплачено</span>' : ''}
             </div>
-            
+
             <div class="mb-3">
               <strong>Товары:</strong>
               <ul class="mb-0 mt-2">
@@ -934,12 +950,12 @@
                 `).join('')}
               </ul>
             </div>
-            
+
             <div class="d-flex justify-content-between align-items-center">
               <strong class="pizza-price">${order.total_price.toLocaleString()} сум</strong>
-              ${order.status === 'new' || order.status === 'preparing' ? 
-                '<small class="text-muted">⏱️ Готовим ваш заказ...</small>' : 
-                order.status === 'ready' ? 
+              ${order.status === 'new' || order.status === 'preparing' ?
+                '<small class="text-muted">⏱️ Готовим ваш заказ...</small>' :
+                order.status === 'ready' ?
                 '<small class="text-success">✨ Готов! Можете забрать!</small>' :
                 '<small class="text-muted">✅ Спасибо за заказ!</small>'}
             </div>
@@ -954,9 +970,25 @@
       document.getElementById('authContainer').style.display = 'none';
       document.getElementById('menuContainer').style.display = 'block';
       document.getElementById('userName').textContent = user.username;
-      
+
       // Показываем пиццы по умолчанию
       showCategory('pizza');
+
+      // Загружаем баланс кошелька
+      loadWalletBalance();
+    }
+
+    // Загрузка баланса кошелька
+    async function loadWalletBalance() {
+      try {
+        const response = await fetch(`${API_URL}/user/${currentUser.id}/wallet`);
+        const data = await response.json();
+        if (data.status === 'ok') {
+          document.getElementById('walletBalance').textContent = data.balance.toLocaleString() + ' сум';
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки баланса:', err);
+      }
     }
 
     // Обновление счетчика корзины
