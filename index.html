@@ -24,7 +24,7 @@
       position: relative;
       overflow-x: hidden;
     }
-
+    
     /* Мультяшные огурчики на фоне */
     body::before {
       content: '';
@@ -33,7 +33,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-image:
+      background-image: 
         url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="15" ry="35" fill="%2334a853" opacity="0.15" transform="rotate(25 50 50)"/><ellipse cx="48" cy="48" rx="12" ry="30" fill="%2334a853" opacity="0.1" transform="rotate(25 50 50)"/><circle cx="45" cy="35" r="2" fill="%23fff" opacity="0.3"/><circle cx="52" cy="45" r="2" fill="%23fff" opacity="0.3"/><circle cx="48" cy="60" r="2" fill="%23fff" opacity="0.3"/></svg>');
       background-size: 80px 80px;
       background-position: 0 0, 40px 40px;
@@ -41,12 +41,12 @@
       z-index: 0;
       animation: floatPickles 30s infinite linear;
     }
-
+    
     @keyframes floatPickles {
       0% { background-position: 0 0, 40px 40px; }
       100% { background-position: 80px 80px, 120px 120px; }
     }
-
+    
     .container {
       max-width: 450px;
       background: rgba(255, 255, 255, 0.98);
@@ -351,7 +351,7 @@
   <div class="container" id="authContainer">
     <h1>🍕 Пиццерия</h1>
     <img src="/img.png" class="img-fluid mb-3" />
-
+    
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">
@@ -404,7 +404,7 @@
           </div>
           <button type="submit" class="btn btn-danger w-100 fw-bold" id="regBtn">Зарегистрироваться</button>
         </form>
-
+        
         <!-- Форма подтверждения кода -->
         <form id="verifyForm" style="display: none;" class="mt-4">
           <div class="mb-3">
@@ -414,7 +414,7 @@
           </div>
           <button type="submit" class="btn btn-danger w-100 fw-bold">Подтвердить код</button>
         </form>
-
+        
         <div id="registerMessage"></div>
       </div>
     </div>
@@ -424,10 +424,22 @@
 
   <!-- Меню с пиццами (скрыто по умолчанию) -->
   <div class="container" id="menuContainer" style="display: none;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <h1>🍕 Меню</h1>
       <button class="btn btn-sm btn-outline-danger" id="logoutBtn">Выход</button>
     </div>
+    
+    <!-- Кошелёк -->
+    <div class="alert alert-success mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>💰 Мой кошелёк</strong><br>
+          <small class="text-muted">Кэшбэк 5% с каждого заказа</small>
+        </div>
+        <h4 class="mb-0" id="walletBalance">0 сум</h4>
+      </div>
+    </div>
+    
     <p class="text-center mb-4">Добро пожаловать, <strong id="userName"></strong>!</p>
 
     <!-- Главное меню: Каталог / Мои заказы -->
@@ -493,7 +505,7 @@
           </button>
         </div>
       </div>
-
+      
       <div id="userOrdersList">
         <p class="text-center text-muted">Загрузка заказов...</p>
       </div>
@@ -546,7 +558,7 @@
               <div class="btn-group w-100" role="group">
                 <input type="radio" class="btn-check" name="deliveryType" id="pickup" value="pickup" checked>
                 <label class="btn btn-outline-danger" for="pickup">🏪 Самовывоз</label>
-
+                
                 <input type="radio" class="btn-check" name="deliveryType" id="delivery" value="delivery">
                 <label class="btn btn-outline-danger" for="delivery">🚚 Доставка</label>
               </div>
@@ -615,11 +627,11 @@
       // Загружаем пользователя (срок действия 30 дней)
       const savedUser = localStorage.getItem('currentUser');
       const userExpiry = localStorage.getItem('userExpiry');
-
+      
       if (savedUser && userExpiry) {
         const expiryDate = new Date(parseInt(userExpiry));
         const now = new Date();
-
+        
         if (now < expiryDate) {
           // Сессия ещё действительна
           currentUser = JSON.parse(savedUser);
@@ -633,7 +645,7 @@
           localStorage.removeItem('userExpiry');
         }
       }
-
+      
       // Загружаем корзину
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
@@ -646,7 +658,7 @@
     function saveUserSession(user) {
       currentUser = user;
       localStorage.setItem('currentUser', JSON.stringify(user));
-
+      
       // Устанавливаем срок действия 30 дней
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 30);
@@ -735,17 +747,17 @@
         item = menuItems[category].find(p => p.id === itemId);
         if (item) break;
       }
-
+      
       if (!item) return;
-
+      
       const existingItem = cart.find(i => i.id === itemId);
-
+      
       if (existingItem) {
         existingItem.quantity++;
       } else {
         cart.push({ ...item, quantity: 1 });
       }
-
+      
       updateCartCount();
       saveCart(); // Сохраняем корзину
       showNotification(`${item.name} добавлен в корзину!`);
@@ -754,17 +766,17 @@
     // Показать категорию (глобальная функция)
     window.showCategory = function(category) {
       currentCategory = category;
-
+      
       // Обновляем активную кнопку
       document.querySelectorAll('.nav-pills .nav-link').forEach(btn => {
         btn.classList.remove('active');
       });
       document.querySelector(`[data-category="${category}"]`).classList.add('active');
-
+      
       // Отображаем товары категории
       const items = menuItems[category] || [];
       const pizzaList = document.getElementById('pizzaList');
-
+      
       pizzaList.innerHTML = items.map(item => `
         <div class="col-md-6">
           <div class="pizza-card">
@@ -802,7 +814,7 @@
       document.getElementById('catalogBtn').classList.add('btn-outline-danger');
       document.getElementById('ordersHistoryBtn').classList.add('btn-danger');
       document.getElementById('ordersHistoryBtn').classList.remove('btn-outline-danger');
-
+      
       orderFilter = 'active'; // По умолчанию показываем активные
       loadUserOrders();
     }
@@ -810,7 +822,7 @@
     // Фильтр заказов
     window.filterOrders = function(filter) {
       orderFilter = filter;
-
+      
       // Обновляем кнопки
       if (filter === 'active') {
         document.getElementById('activeOrdersBtn').classList.add('btn-danger');
@@ -823,7 +835,7 @@
         document.getElementById('activeOrdersBtn').classList.remove('btn-danger');
         document.getElementById('activeOrdersBtn').classList.add('btn-outline-danger');
       }
-
+      
       renderUserOrders(allUserOrders);
     }
 
@@ -831,11 +843,11 @@
     async function loadUserOrders() {
       const listDiv = document.getElementById('userOrdersList');
       listDiv.innerHTML = '<p class="text-center text-muted">Загрузка...</p>';
-
+      
       try {
         const response = await fetch(`${API_URL}/user/${currentUser.id}/orders`);
         const data = await response.json();
-
+        
         if (data.status === 'ok') {
           allUserOrders = data.orders;
           renderUserOrders(data.orders);
@@ -850,7 +862,7 @@
     // Отрисовка заказов пользователя
     function renderUserOrders(orders) {
       const listDiv = document.getElementById('userOrdersList');
-
+      
       // Фильтруем заказы
       let filteredOrders;
       if (orderFilter === 'active') {
@@ -860,29 +872,29 @@
         // Выполненные: delivered
         filteredOrders = orders.filter(o => o.status === 'delivered');
       }
-
+      
       if (filteredOrders.length === 0) {
-        const emptyMessage = orderFilter === 'active'
+        const emptyMessage = orderFilter === 'active' 
           ? '<div class="text-center py-5"><p class="text-muted">Нет активных заказов</p><button class="btn btn-danger" onclick="showCatalog()">Сделать заказ</button></div>'
           : '<div class="text-center py-5"><p class="text-muted">Нет выполненных заказов</p></div>';
         listDiv.innerHTML = emptyMessage;
         return;
       }
-
+      
       const statusNames = {
         'new': 'Новый',
         'preparing': 'Готовится',
         'ready': 'Готов к выдаче',
         'delivered': 'Доставлен'
       };
-
+      
       const statusIcons = {
         'new': '🆕',
         'preparing': '👨‍🍳',
         'ready': '✅',
         'delivered': '🎉'
       };
-
+      
       listDiv.innerHTML = filteredOrders.map(order => {
         const items = JSON.parse(order.items);
         const deliveryText = order.delivery_type === 'pickup' ? '🏪 Самовывоз' : '🚚 Доставка';
@@ -891,7 +903,7 @@
           'card': '💳 Картой',
           'online': '🌐 Оплачено'
         }[order.payment_method];
-
+        
         return `
           <div class="order-history-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -903,17 +915,17 @@
                 ${statusIcons[order.status]} ${statusNames[order.status]}
               </span>
             </div>
-
+            
             <div class="mb-2">
               <strong>${deliveryText}</strong>
               ${order.delivery_type === 'delivery' ? `<br><small class="text-muted">📍 ${order.address}</small>` : ''}
             </div>
-
+            
             <div class="mb-3">
               <strong>Оплата:</strong> ${paymentText}
               ${order.payment_status === 'paid' ? '<span class="badge bg-success ms-2">✓ Оплачено</span>' : ''}
             </div>
-
+            
             <div class="mb-3">
               <strong>Товары:</strong>
               <ul class="mb-0 mt-2">
@@ -922,12 +934,12 @@
                 `).join('')}
               </ul>
             </div>
-
+            
             <div class="d-flex justify-content-between align-items-center">
               <strong class="pizza-price">${order.total_price.toLocaleString()} сум</strong>
-              ${order.status === 'new' || order.status === 'preparing' ?
-                '<small class="text-muted">⏱️ Готовим ваш заказ...</small>' :
-                order.status === 'ready' ?
+              ${order.status === 'new' || order.status === 'preparing' ? 
+                '<small class="text-muted">⏱️ Готовим ваш заказ...</small>' : 
+                order.status === 'ready' ? 
                 '<small class="text-success">✨ Готов! Можете забрать!</small>' :
                 '<small class="text-muted">✅ Спасибо за заказ!</small>'}
             </div>
@@ -942,7 +954,7 @@
       document.getElementById('authContainer').style.display = 'none';
       document.getElementById('menuContainer').style.display = 'block';
       document.getElementById('userName').textContent = user.username;
-
+      
       // Показываем пиццы по умолчанию
       showCategory('pizza');
     }
@@ -956,13 +968,13 @@
     // Отрисовка корзины
     function renderCart() {
       const cartBody = document.getElementById('cartModalBody');
-
+      
       if (cart.length === 0) {
         cartBody.innerHTML = '<p class="text-center text-muted py-4">Корзина пустая</p>';
         document.getElementById('cartTotal').textContent = '0 сум';
         return;
       }
-
+      
       cartBody.innerHTML = cart.map(item => `
         <div class="cart-item">
           <div class="d-flex justify-content-between align-items-start mb-2">
@@ -984,7 +996,7 @@
           </div>
         </div>
       `).join('');
-
+      
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       document.getElementById('cartTotal').textContent = total.toLocaleString() + ' сум';
     }
@@ -1033,12 +1045,12 @@
     document.getElementById('logoutBtn').addEventListener('click', () => {
       currentUser = null;
       cart = [];
-
+      
       // Очищаем localStorage
       localStorage.removeItem('currentUser');
       localStorage.removeItem('userExpiry');
       localStorage.removeItem('cart');
-
+      
       document.getElementById('authContainer').style.display = 'block';
       document.getElementById('menuContainer').style.display = 'none';
       updateCartCount();
@@ -1057,10 +1069,10 @@
         showNotification('Корзина пустая!');
         return;
       }
-
+      
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       document.getElementById('checkoutTotal').textContent = total.toLocaleString() + ' сум';
-
+      
       // Проверяем есть ли сохранённая локация
       try {
         const response = await fetch(`${API_URL}/user/${currentUser.telegram_id}/location`);
@@ -1076,7 +1088,7 @@
       } catch (err) {
         // Локация не найдена, ничего страшного
       }
-
+      
       // Закрываем корзину и открываем форму оформления
       bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
       const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
@@ -1101,10 +1113,10 @@
     document.getElementById('requestLocationBtn').addEventListener('click', () => {
       // Закрываем модальное окно оформления
       bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
-
+      
       // Показываем инструкцию
       tg.showAlert('📍 Отправьте вашу геопозицию в чат бота, затем вернитесь и снова нажмите "Оформить заказ"');
-
+      
       // Закрываем WebApp чтобы пользователь отправил локацию
       setTimeout(() => {
         tg.close();
@@ -1116,27 +1128,27 @@
       const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
       const address = document.getElementById('deliveryAddress').value.trim();
       const paymentMethod = document.getElementById('paymentMethod').value;
-
+      
       // Валидация
       if (!paymentMethod) {
         showNotification('Выберите способ оплаты!');
         return;
       }
-
+      
       if (deliveryType === 'delivery' && !address) {
         showNotification('Отправьте вашу геолокацию для доставки!');
         return;
       }
-
+      
       const items = cart.map(item => ({
         id: item.id,
         name: item.name,
         price: item.price,
         quantity: item.quantity
       }));
-
+      
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
+      
       try {
         const response = await fetch(`${API_URL}/order`, {
           method: 'POST',
@@ -1152,9 +1164,9 @@
             payment_method: paymentMethod
           })
         });
-
+        
         const data = await response.json();
-
+        
         if (data.status === 'ok') {
           const deliveryText = deliveryType === 'pickup' ? 'Самовывоз' : `Доставка`;
           const paymentText = {
@@ -1162,9 +1174,9 @@
             'card': 'Картой при получении',
             'online': 'Оплачено онлайн'
           }[paymentMethod];
-
+          
           showNotification(`✅ Заказ №${data.order_id} оформлен!\n\n${deliveryText}\n${paymentText}\n\nИтого: ${total.toLocaleString()} сум\n\nОжидайте звонка!`);
-
+          
           // Очищаем корзину и форму
           cart = [];
           updateCartCount();
@@ -1174,7 +1186,7 @@
           document.getElementById('locationLat').value = '';
           document.getElementById('locationLon').value = '';
           document.getElementById('locationStatus').innerHTML = 'Нажмите кнопку выше для определения адреса';
-
+          
           // Закрываем модальное окно
           bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
         } else {
@@ -1206,10 +1218,10 @@
           msgDiv.innerHTML = `<div class="alert alert-success">${data.message}<br>Добро пожаловать, ${data.user.username}!</div>`;
           // Сохраняем user.id для заказов
           data.user.id = data.user.id || data.user.telegram_id;
-
+          
           // Сохраняем сессию на 30 дней
           saveUserSession(data.user);
-
+          
           setTimeout(() => showMenu(data.user), 1000);
         } else {
           msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
